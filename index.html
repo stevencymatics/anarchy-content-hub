@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0d0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Content Hub">
+<title>Content Hub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d0f14'/%3E%3Cpath d='M24 18v28l22-14z' fill='%23f4c74a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://ukljtxjwaulovdbyuzzj.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Anarchy Chess Content Hub: one phone column of big poster rows grouped by section (the Video Library's look),
+   a sticky filter bar, and a full-screen player with review controls. Single dark look. */
+:root {
+  --bg: #0d0f14; --surface: #161922; --surface-hi: #1f2330; --line: #262b39;
+  --fg: #eef0f5; --muted: #8c94a8; --gold: #f4c74a; --gold-ink: #231a02;
+  --green: #4fd18b; --green-ink: #04210f; --red: #ff7a6b;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); margin: 0; }
+body {
+  color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.35;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: 48px; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+}
+main { max-width: 640px; margin: 0 auto; display: grid; gap: 22px; }
+header { padding-top: calc(env(safe-area-inset-top, 0px) + 20px); }
+header h1 { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1; letter-spacing: 0.01em; margin: 0; text-transform: uppercase; }
+header p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.newcount { color: var(--gold); font-weight: 600; }
+.linkbtn { font: 600 13px var(--font-body); color: var(--muted); background: none; border: 0; padding: 0 0 0 8px; cursor: pointer; text-decoration: underline; }
+
+/* sticky filters */
+.bar { position: sticky; top: 0; z-index: 20; background: var(--bg); padding: calc(env(safe-area-inset-top, 0px) + 8px) 0 10px; margin: -6px 0 -10px; display: grid; gap: 10px; }
+.search { position: relative; }
+.search input {
+  width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface);
+  color: var(--fg); font: 500 16px var(--font-body); padding: 0 40px 0 40px; outline: none; -webkit-appearance: none;
+}
+.search input:focus { border-color: var(--gold); }
+.search svg { position: absolute; left: 12px; top: 12px; width: 20px; height: 20px; stroke: var(--muted); fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.search button { position: absolute; right: 4px; top: 4px; width: 36px; height: 36px; border: 0; background: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: none; font: 600 14px var(--font-body); color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; white-space: nowrap;
+}
+.chip small { color: var(--muted); font-weight: 600; margin-left: 4px; }
+.chip[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+.chip[aria-pressed="true"] small { color: var(--gold-ink); opacity: 0.7; }
+
+section { display: grid; gap: 10px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.sec-head h2 { font-family: var(--font-display); font-weight: 700; font-size: 24px; margin: 0; text-transform: uppercase; letter-spacing: 0.03em; text-wrap: balance; }
+.sec-head h2 small { color: var(--muted); font-size: 18px; margin-left: 6px; font-weight: 600; }
+.play-all { font: 600 14px var(--font-body); color: var(--gold); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; white-space: nowrap; }
+.empty, .status { color: var(--muted); font-size: 15px; margin: 0; padding: 14px 0; }
+.status.err { color: var(--red); }
+ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.item {
+  width: 100%; display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center;
+  background: var(--surface); border: 0; border-radius: 12px; padding: 8px 14px 8px 8px;
+  color: inherit; font: inherit; text-align: left; cursor: pointer; min-height: 130px;
+}
+.item:active { background: var(--surface-hi); }
+.item:focus-visible, .chip:focus-visible, .play-all:focus-visible, .pbtn:focus-visible, summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.thumb { width: 64px; aspect-ratio: 9 / 16; border-radius: 7px; background: var(--surface-hi); object-fit: cover; display: block; }
+.info { min-width: 0; display: grid; gap: 4px; }
+.title { font-weight: 600; font-size: 17px; line-height: 1.25; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tags { display: grid; gap: 6px; justify-items: end; align-self: start; margin-top: 6px; }
+.tag { font: 700 11px var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 8px; border-radius: 6px; }
+.tag.final { background: var(--gold); color: var(--gold-ink); }
+.tag.draft { border: 1px solid var(--muted); color: var(--muted); }
+.tag.ok { background: var(--green); color: var(--green-ink); }
+.tag.parked { border: 1px solid var(--line); color: var(--muted); }
+.fresh { display: inline-flex; align-items: center; gap: 5px; font: 700 11px var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); margin-right: 6px; vertical-align: 1px; }
+.fresh::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+details { border-top: 1px solid var(--line); padding-top: 14px; }
+summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-display); font-weight: 700; font-size: 24px; text-transform: uppercase; letter-spacing: 0.03em; }
+summary::-webkit-details-marker { display: none; }
+summary span { font: 600 14px var(--font-body); color: var(--gold); text-transform: none; letter-spacing: 0; }
+details[open] summary span .closed, details:not([open]) summary span .opened { display: none; }
+details ul.list { margin-top: 12px; }
+
+/* player */
+#player { position: fixed; inset: 0; z-index: 50; background: #000; display: grid; grid-template-rows: auto 1fr auto; touch-action: none; }
+#player video { width: 100%; height: 100%; object-fit: contain; min-height: 0; background: #000; display: block; }
+.ptop, .pbot { display: flex; align-items: center; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.ptop { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); padding-bottom: 8px; }
+.pbot { padding-top: 8px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); flex-direction: column; gap: 8px; }
+.ptitle { flex: 1; min-width: 0; text-align: center; }
+.ptitle b { display: block; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ptitle span { display: block; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbtn {
+  background: var(--surface-hi); color: var(--fg); border: 0; border-radius: 999px; cursor: pointer;
+  min-width: 48px; height: 48px; padding: 0 16px; font: 600 15px var(--font-body);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+}
+.pbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.pbtn.gold { background: var(--gold); color: var(--gold-ink); }
+.pbtn.on-ok { background: var(--green); color: var(--green-ink); }
+.pbtn.on-park { background: var(--fg); color: var(--bg); }
+.pbtn:disabled { opacity: 0.35; }
+.row { width: 100%; display: flex; gap: 8px; }
+.row .pbtn { flex: 1; padding: 0 10px; }
+#toast { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--surface-hi); color: var(--fg); padding: 10px 16px; border-radius: 10px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; z-index: 3; }
+.stage { position: relative; min-height: 0; }
+#player.fill { grid-template-rows: 1fr; }
+#player.fill .ptop, #player.fill .pbot { display: none; }
+#fsexit { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: max(12px, env(safe-area-inset-right, 0px)); background: rgba(13, 15, 20, 0.6); }
+
+/* review sheet */
+#sheet { position: fixed; inset: 0; z-index: 60; display: grid; align-items: end; background: rgba(0, 0, 0, 0.55); }
+.sheet-in {
+  background: var(--surface); border-radius: 18px 18px 0 0; max-height: 82vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 12px; width: 100%; max-width: 640px; margin: 0 auto;
+}
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.sheet-head b { flex: 1; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field { display: grid; gap: 6px; }
+.field label { color: var(--muted); font-size: 13px; }
+.field input, .field textarea {
+  width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  font: 500 16px var(--font-body); padding: 10px 12px; outline: none; -webkit-appearance: none;
+}
+.field input:focus, .field textarea:focus { border-color: var(--gold); }
+.field textarea { min-height: 84px; resize: vertical; }
+.check { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
+.check input { width: 20px; height: 20px; accent-color: var(--gold); }
+ul.comments { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.comments li { background: var(--bg); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; }
+ul.comments .who { font-size: 13px; color: var(--muted); }
+ul.comments .who b { color: var(--fg); font-weight: 600; }
+ul.comments .at { color: var(--gold); background: none; border: 0; padding: 0; font: 600 13px var(--font-body); cursor: pointer; }
+ul.comments .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
+ul.comments li.ev { background: none; padding: 2px 12px; color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .item { transition: background 0.12s; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Content Hub</h1>
+    <p id="sub">Anarchy Chess videos. Loading…</p>
+  </header>
+  <div class="bar">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Search videos" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search videos">
+      <button id="qx" type="button" aria-label="Clear search" hidden>×</button>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filter"></div>
+  </div>
+  <div id="sections" style="display:grid;gap:28px"></div>
+</main>
+
+<div id="player" hidden>
+  <div class="ptop">
+    <button class="pbtn" id="close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="ptitle"><b id="ptitle"></b><span id="pcount"></span></div>
+    <button class="pbtn" id="fs" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="pbtn gold" id="dl" aria-label="Download the master file"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+  </div>
+  <div class="stage">
+    <video id="video" playsinline webkit-playsinline preload="auto" controls></video>
+    <div id="toast" hidden></div>
+    <button class="pbtn" id="fsexit" hidden aria-label="Exit full screen"><svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg></button>
+  </div>
+  <div class="pbot">
+    <div class="row">
+      <button class="pbtn" id="approve"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Approve</span></button>
+      <button class="pbtn" id="park"><svg viewBox="0 0 24 24"><path d="M7 5v14M7 5h6a4 4 0 010 8H7"/></svg><span>Park</span></button>
+      <button class="pbtn" id="talk"><svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-5 4z"/></svg><span id="talkn">Comment</span></button>
+    </div>
+    <div class="row">
+      <button class="pbtn" id="prev"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>Previous</button>
+      <button class="pbtn" id="next">Next<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div id="sheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="stitle">
+    <div class="sheet-head">
+      <b id="stitle">Comments</b>
+      <button class="pbtn" id="sclose" aria-label="Close comments"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="field" id="whof">
+      <label for="who">Your name</label>
+      <input id="who" maxlength="40" autocomplete="name" placeholder="Steven">
+    </div>
+    <div class="field">
+      <label for="ctext">Comment</label>
+      <textarea id="ctext" maxlength="2000" placeholder="What should change?"></textarea>
+    </div>
+    <label class="check"><input type="checkbox" id="atnow" checked><span id="atlabel">At 0:00 in the video</span></label>
+    <button class="pbtn gold" id="csend">Post comment</button>
+    <ul class="comments" id="clist"></ul>
+  </div>
+</div>
+
+<script>
+"use strict";
+const API = "https://ukljtxjwaulovdbyuzzj.supabase.co/functions/v1/hub";
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* private mode: fine */ } },
+};
+
+/* The key lives in the link's #fragment (never sent to any server but the hub function, in the request body). */
+function readKey() {
+  const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  const m = h.match(/(?:^|&)k=([^&]+)/);
+  const k = m ? m[1] : (h && !h.includes("=") ? h : "");
+  if (k.length >= 32) { store.set("hub-key", k); return k; }
+  return store.get("hub-key") || "";
+}
+const KEY = readKey();
+
+async function api(action, body) {
+  const r = await fetch(API, { method: "POST", body: JSON.stringify(Object.assign({ k: KEY, action }, body || {})) });
+  let j = null; try { j = await r.json(); } catch (e) { /* ignore */ }
+  if (!r.ok) { const e = new Error((j && j.error) || ("HTTP " + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+
+const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const when = (sec) => {
+  const d = new Date(sec * 1000);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + ", " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+};
+const ago = (iso) => {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (s < 60) return "just now"; if (s < 3600) return Math.floor(s / 60) + "m ago"; if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+/* ---------------- state ---------------- */
+let SECS = [];            // catalog sections [{id,t,items}]
+let BYID = new Map();     // master render id -> item
+let VIEW = [];            // sections after filter + search
+let filter = store.get("hub-filter") || "all";
+let query = "";
+const posterCache = new Map();   // poster path -> {u, t}: keep the first signed URL so the browser cache holds
+let lastLoad = 0, loading = false;
+
+/* What this viewer has opened, per device (convenience only). New = never opened; Updated = an older version of the
+   same video+language was opened. First visit: everything older than 12 h counts as seen. */
+const SEEN_KEY = "hub-seen-v1";
+let seen = null, seenKeys = null, firstVisit = false;
+try {
+  const raw = localStorage.getItem(SEEN_KEY);
+  if (raw) { const o = JSON.parse(raw); seen = new Set(o.u || []); seenKeys = new Set(o.k || []); }
+  else { seen = new Set(); seenKeys = new Set(); firstVisit = true; }
+} catch (e) { seen = null; }
+const vkey = (it) => it.vid + "|" + it.lang;
+function saveSeen() { try { localStorage.setItem(SEEN_KEY, JSON.stringify({ u: [...seen], k: [...seenKeys] })); } catch (e) { /* ignore */ } }
+function freshness(it) {
+  if (it.st === "parked") return null;
+  if (!seen) return (Date.now() / 1000 - it.at < 24 * 3600) ? "new" : null;
+  if (seen.has(it.id)) return null;
+  return seenKeys.has(vkey(it)) ? "updated" : "new";
+}
+function markSeen(it) {
+  if (!seen || seen.has(it.id)) return;
+  seen.add(it.id); seenKeys.add(vkey(it)); saveSeen();
+  document.querySelectorAll('.fresh[data-id="' + it.id + '"]').forEach((f) => f.remove());
+  updateCount();
+}
+
+/* ---------------- catalog ---------------- */
+async function load(quiet) {
+  if (loading) return; loading = true;
+  if (!KEY) { showStatus("This link is missing its key. Open the full Content Hub link.", true); loading = false; return; }
+  try {
+    const j = await api("catalog");
+    lastLoad = Date.now();
+    const now = Date.now();
+    for (const s of j.sections) for (const it of s.items) {
+      if (it.p && it.pu) {
+        const c = posterCache.get(it.p);
+        if (!c || now - c.t > 20 * 3600 * 1000) posterCache.set(it.p, { u: it.pu, t: now });
+        it.pu = posterCache.get(it.p).u;
+      }
+    }
+    const sig = JSON.stringify(j.sections.map((s) => s.items.map((i) => [i.id, i.st, i.rv.length, i.phone])));
+    const changed = sig !== load.sig; load.sig = sig;
+    SECS = j.sections; BYID = new Map();
+    for (const s of SECS) for (const it of s.items) BYID.set(it.id, it);
+    if (firstVisit && seen) {
+      firstVisit = false;
+      for (const it of BYID.values()) if (Date.now() / 1000 - it.at > 12 * 3600) { seen.add(it.id); seenKeys.add(vkey(it)); }
+      saveSeen();
+    }
+    if (cur) refreshPlayerMeta();          // the list re-renders when the player closes
+    else if (changed || !quiet) render();
+  } catch (e) {
+    if (e.status === 401) showStatus("This link's key isn't valid any more. Ask for the new Content Hub link.", true);
+    else if (!quiet) showStatus("Couldn't load the videos (" + e.message + "). Pull down to retry.", true);
+  } finally { loading = false; }
+}
+function showStatus(msg, err) {
+  $("sections").replaceChildren(el("p", "status" + (err ? " err" : ""), msg));
+  $("sub").textContent = "Anarchy Chess videos.";
+}
+// Live: refresh every 60 s while the page is visible, and when it comes back to the front.
+setInterval(() => { if (document.visibilityState === "visible") load(true); }, 60000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - lastLoad > 20000) load(true); });
+
+/* ---------------- filters ---------------- */
+const FILTERS = [
+  ["all", "All", (it) => it.st !== "parked"],
+  ["final", "Final", (it) => it.st !== "parked" && it.stage === "final"],
+  ["draft", "Draft", (it) => it.st !== "parked" && it.stage !== "final"],
+  ["approved", "Approved", (it) => it.st === "approved"],
+  ["parked", "Parked", (it) => it.st === "parked"],
+];
+if (!FILTERS.some((f) => f[0] === filter)) filter = "all";
+function matches(it) {
+  if (!query) return true;
+  const hay = (it.t + " " + it.ver + " " + it.lname + " " + it.slug).toLowerCase();
+  return query.toLowerCase().split(/\s+/).filter(Boolean).every((w) => hay.includes(w));
+}
+function buildView() {
+  const f = FILTERS.find((x) => x[0] === filter)[2];
+  // Sections keep their place; a parked video lives only in "Parked" (shown collapsed under "All").
+  VIEW = [];
+  for (const s of SECS) {
+    const parkedSec = s.id === "parked";
+    let items = s.items.filter(matches);
+    if (filter === "all" && parkedSec) { VIEW.push({ id: s.id, t: s.t, items, older: true }); continue; }
+    items = items.filter(f);
+    if (parkedSec && filter !== "parked") continue;
+    if (!items.length && (filter !== "all" || query)) continue;
+    VIEW.push({ id: s.id, t: s.t, items });
+  }
+}
+function renderChips() {
+  const host = $("chips"); host.replaceChildren();
+  const all = [...BYID.values()].filter(matches);
+  for (const [id, label, fn] of FILTERS) {
+    const b = el("button", "chip", label); b.type = "button";
+    b.setAttribute("aria-pressed", String(id === filter));
+    b.append(el("small", null, String(all.filter(fn).length)));
+    b.onclick = () => { filter = id; store.set("hub-filter", id); render(); window.scrollTo({ top: 0 }); };
+    host.append(b);
+  }
+}
+let qt = 0;
+$("q").addEventListener("input", () => {
+  $("qx").hidden = !$("q").value;
+  clearTimeout(qt); qt = setTimeout(() => { query = $("q").value.trim(); render(); }, 120);
+});
+$("qx").onclick = () => { $("q").value = ""; $("qx").hidden = true; query = ""; render(); };
+
+/* ---------------- list ---------------- */
+function row(it, sid) {
+  const li = el("li");
+  const b = el("button", "item"); b.type = "button";
+  const img = el("img", "thumb"); img.alt = ""; img.decoding = "async"; img.loading = "lazy";
+  if (it.pu) img.src = it.pu;
+  const info = el("div", "info");
+  const tl = el("div", "title");
+  const st = freshness(it);
+  if (st) { const f = el("span", "fresh", st === "updated" ? "Updated" : "New"); f.dataset.id = it.id; tl.append(f); }
+  tl.append(document.createTextNode(it.t));
+  const nc = it.rv.filter((r) => r.verdict === "comment").length;
+  info.append(tl, el("div", "meta", [it.d ? fmt(it.d) : null, it.ver, when(it.at), nc ? nc + (nc === 1 ? " comment" : " comments") : null].filter(Boolean).join(" · ")));
+  const tags = el("div", "tags");
+  tags.append(el("span", "tag " + (it.stage === "final" ? "final" : "draft"), it.stage === "final" ? "Final" : "Draft"));
+  if (it.st === "approved") tags.append(el("span", "tag ok", "Approved"));
+  if (it.st === "parked") tags.append(el("span", "tag parked", "Parked"));
+  b.append(img, info, tags);
+  b.addEventListener("click", () => openPlayer(sid, it.id));
+  li.append(b);
+  return li;
+}
+function render() {
+  buildView(); renderChips();
+  const host = $("sections"); host.replaceChildren();
+  let total = 0;
+  for (const s of VIEW) {
+    const ul = el("ul", "list");
+    s.items.forEach((it) => ul.append(row(it, s.id)));
+    if (s.older) {
+      if (!s.items.length) continue;
+      const d = el("details"); const sum = el("summary");
+      sum.append(document.createTextNode(s.t + " "));
+      const sp = el("span"); sp.append(el("span", "closed", "Show " + s.items.length), el("span", "opened", "Hide"));
+      sum.append(sp); d.append(sum, ul); host.append(d);
+      continue;
+    }
+    total += s.items.length;
+    const sec = el("section"); const head = el("div", "sec-head"); const h = el("h2", null, s.t);
+    if (s.items.length) h.append(el("small", null, String(s.items.length)));
+    head.append(h);
+    if (s.items.length > 1) {
+      const pa = el("button", "play-all", "Play all"); pa.type = "button";
+      pa.addEventListener("click", () => openPlayer(s.id, s.items[0].id));
+      head.append(pa);
+    }
+    sec.append(head, s.items.length ? ul : el("p", "empty", "No videos here yet."));
+    host.append(sec);
+  }
+  if (!host.children.length) host.append(el("p", "empty", query ? "Nothing matches “" + query + "”." : "Nothing here."));
+  const sub = $("sub");
+  sub.textContent = total + " videos, newest first. Tap one to watch, swipe for the next.";
+  const nc = el("span", "newcount"); nc.id = "newcount"; sub.append(nc);
+  const sa = el("button", "linkbtn", "Mark all seen"); sa.id = "seenall"; sa.type = "button";
+  sa.onclick = () => { for (const it of BYID.values()) markSeen(it); };
+  sub.append(sa);
+  updateCount();
+}
+function updateCount() {
+  const n = document.querySelectorAll("#sections .fresh").length;
+  const c = $("newcount"); if (c) c.textContent = n ? " · " + n + " new or updated" : "";
+  const b = $("seenall"); if (b) b.hidden = !n || !seen;
+}
+
+/* ---------------- signed video URLs (lazy, cached) ---------------- */
+const urls = new Map();   // "play:<id>" | "download:<id>" -> {url, kind, exp}
+async function signed(ids, mode) {
+  const need = ids.filter((id) => { const c = urls.get(mode + ":" + id); return !c || c.exp < Date.now(); });
+  if (need.length) {
+    const j = await api("sign", { ids: need, mode });
+    const ttl = (mode === "download" ? 50 : 5 * 60) * 60 * 1000;
+    for (const [id, v] of Object.entries(j.urls)) if (v.url) urls.set(mode + ":" + id, { url: v.url, kind: v.kind, exp: Date.now() + ttl });
+  }
+  return urls.get(mode + ":" + ids[0]);
+}
+
+/* ---------------- player ---------------- */
+const video = $("video");
+let cur = null;   // {sid, id}
+const listOf = () => { const s = VIEW.find((x) => x.id === cur.sid); return s ? s.items : []; };
+const idx = () => listOf().findIndex((x) => x.id === cur.id);
+const item = () => BYID.get(cur.id);
+
+function refreshPlayerMeta() {
+  const it = item(); if (!it) return;
+  const list = listOf(), i = idx();
+  $("ptitle").textContent = it.t;
+  const sec = VIEW.find((x) => x.id === cur.sid);
+  $("pcount").textContent = (i >= 0 ? (i + 1) + " of " + list.length + " · " : "") + (sec ? sec.t : "") + " · " + it.ver +
+    (cur.kind === "master" ? " · master" : "");
+  $("prev").disabled = i <= 0;
+  $("next").disabled = i < 0 || i >= list.length - 1;
+  $("approve").className = "pbtn" + (it.st === "approved" ? " on-ok" : "");
+  $("approve").querySelector("span").textContent = it.st === "approved" ? "Approved" : "Approve";
+  $("park").className = "pbtn" + (it.st === "parked" ? " on-park" : "");
+  $("park").querySelector("span").textContent = it.st === "parked" ? "Parked" : "Park";
+  const n = it.rv.filter((r) => r.verdict === "comment").length;
+  $("talkn").textContent = n ? "Comments " + n : "Comment";
+  if (!$("sheet").hidden) renderComments();
+}
+let showToken = 0;
+async function show(id) {
+  cur.id = id; cur.kind = null;
+  const it = item(); if (!it) return;
+  markSeen(it);
+  const tok = ++showToken;
+  video.removeAttribute("src"); video.poster = it.pu || ""; video.load();
+  refreshPlayerMeta();
+  const list = listOf(), i = idx();
+  const ids = [id]; if (list[i + 1]) ids.push(list[i + 1].id);   // sign the next one too, so swiping is instant
+  try {
+    const s = await signed(ids, "play");
+    if (tok !== showToken) return;
+    cur.kind = s.kind; refreshPlayerMeta();
+    video.src = s.url; play();
+  } catch (e) {
+    if (tok === showToken) toast(e.status === 401 ? "This link's key isn't valid any more." : "Couldn't load this video. Check your connection.");
+  }
+}
+function play() {
+  video.muted = false;
+  let p; try { p = video.play(); } catch (e) { p = null; }
+  if (p && p.catch) p.catch((err) => {
+    if (err && err.name === "NotAllowedError") {
+      video.muted = true;
+      const q = video.play();
+      if (q && q.then) q.then(() => toast("Playing muted. Tap the speaker for sound.")).catch(() => toast("Tap ▶ to play"));
+    } else if (err && err.name !== "AbortError") toast("Tap ▶ to play");
+  });
+}
+let retried = "";
+video.addEventListener("error", async () => {
+  if (!cur || !video.getAttribute("src")) return;
+  if (retried !== cur.id) {   // the signed URL may have expired: sign again once
+    retried = cur.id; urls.delete("play:" + cur.id);
+    try { const s = await signed([cur.id], "play"); video.src = s.url; play(); return; } catch (e) { /* fall through */ }
+  }
+  toast("This video didn't load. Check your connection, then tap Next and Previous to retry.");
+});
+function openPlayer(sid, id) {
+  cur = { sid, id };
+  $("player").hidden = false;
+  document.body.style.overflow = "hidden";
+  show(id);
+}
+function closePlayer() {
+  exitFill(); closeSheet();
+  video.pause(); video.removeAttribute("src"); video.load();
+  $("player").hidden = true; document.body.style.overflow = ""; cur = null;
+  render();
+}
+function step(d) {
+  if (!cur) return;
+  const list = listOf(), n = idx() + d;
+  if (n >= 0 && n < list.length) show(list[n].id);
+}
+$("close").onclick = closePlayer;
+$("prev").onclick = () => step(-1);
+$("next").onclick = () => step(1);
+video.addEventListener("ended", () => { if (cur && idx() < listOf().length - 1) step(1); });
+
+/* Full screen: iPhone only allows it on the <video> itself (webkitEnterFullscreen); elsewhere the standard API;
+   if neither works, fill the player with just the video. */
+function fill() { $("player").classList.add("fill"); $("fsexit").hidden = false; }
+function exitFill() { $("player").classList.remove("fill"); $("fsexit").hidden = true; }
+function goFull() {
+  const v = video;
+  try { if (typeof v.webkitEnterFullscreen === "function" && !v.requestFullscreen && !v.webkitRequestFullscreen) { v.webkitEnterFullscreen(); return; } } catch (e) { /* next */ }
+  const req = v.requestFullscreen || v.webkitRequestFullscreen;
+  if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+    try { const r = req.call(v); if (r && r.catch) r.catch(fill); return; } catch (e) { /* next */ }
+  }
+  try { if (typeof v.webkitEnterFullscreen === "function") { v.webkitEnterFullscreen(); return; } } catch (e) { /* next */ }
+  fill();
+}
+$("fs").onclick = goFull;
+$("fsexit").onclick = exitFill;
+video.addEventListener("webkitendfullscreen", () => { if (cur && video.paused && !video.ended) play(); });
+
+document.addEventListener("keydown", (e) => {
+  if (!cur || !$("sheet").hidden || /INPUT|TEXTAREA/.test((e.target || {}).tagName || "")) return;
+  if (e.key === "Escape") { if ($("player").classList.contains("fill")) exitFill(); else closePlayer(); }
+  else if (e.key === "ArrowRight" || e.key === "ArrowDown") step(1);
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") step(-1);
+});
+let t0 = null;
+const stage = $("player").querySelector(".stage");
+stage.addEventListener("touchstart", (e) => {
+  const t = e.touches[0], r = e.currentTarget.getBoundingClientRect();
+  t0 = (t.clientY > r.bottom - 90) ? null : [t.clientX, t.clientY];   // leave the native controls' strip alone
+}, { passive: true });
+stage.addEventListener("touchend", (e) => {
+  if (!t0) return;
+  const t = e.changedTouches[0], dx = t.clientX - t0[0], dy = t.clientY - t0[1];
+  t0 = null;
+  if (Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dy) > 70) step(dy < 0 ? 1 : -1);
+});
+
+let toastTimer = 0;
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3000);
+}
+
+/* Download: the master file, signed as an attachment (the phone shows its own save prompt). */
+$("dl").onclick = async () => {
+  if (!cur) return;
+  toast("Getting the file…");
+  try {
+    const s = await signed([cur.id], "download");
+    const a = document.createElement("a"); a.href = s.url; a.rel = "noopener"; a.download = "";
+    document.body.append(a); a.click(); a.remove();
+  } catch (e) { toast("Couldn't get the download link."); }
+};
+
+/* ---------------- review: approve / park / comment ---------------- */
+const getWho = () => (store.get("hub-who") || "").trim();
+async function setStatus(status) {
+  const it = item(); if (!it) return;
+  if (!getWho()) { openSheet("Add your name first, then tap " + (status === "approved" ? "Approve" : "Park") + " again."); return; }
+  const next = it.st === status ? "draft" : status;     // tapping again undoes it
+  const prev = it.st;
+  for (const x of BYID.values()) if (x.vid === it.vid) x.st = next;
+  refreshPlayerMeta();
+  toast(next === "approved" ? "Approved" : next === "parked" ? "Parked: it moves to the Parked section" : "Back to draft");
+  try {
+    await api("status", { vid: it.vid, status: next, who: getWho(), render: it.id });
+    const ev = { who: getWho(), verdict: next === "approved" ? "approve" : next === "parked" ? "park" : "draft", at: new Date().toISOString(), render: it.id, ver: it.ver };
+    for (const x of BYID.values()) if (x.vid === it.vid) x.rv = [ev].concat(x.rv);
+    refreshPlayerMeta();
+  } catch (e) {
+    for (const x of BYID.values()) if (x.vid === it.vid) x.st = prev;
+    refreshPlayerMeta(); toast("Couldn't save that. Try again.");
+  }
+}
+$("approve").onclick = () => setStatus("approved");
+$("park").onclick = () => setStatus("parked");
+
+function openSheet(hint) {
+  if (!cur) return;
+  video.pause();
+  $("who").value = getWho();
+  $("whof").hidden = !!getWho() && !hint;
+  $("atlabel").textContent = "At " + fmt(video.currentTime) + " in the video";
+  $("sheet").hidden = false;
+  renderComments();
+  if (hint) toast(hint);
+  setTimeout(() => (getWho() ? $("ctext") : $("who")).focus(), 50);
+}
+function closeSheet() { $("sheet").hidden = true; }
+$("talk").onclick = () => openSheet();
+$("sclose").onclick = closeSheet;
+$("sheet").addEventListener("click", (e) => { if (e.target === $("sheet")) closeSheet(); });
+$("who").addEventListener("change", () => store.set("hub-who", $("who").value.trim()));
+function renderComments() {
+  const it = item(); const ul = $("clist"); ul.replaceChildren();
+  if (!it) return;
+  $("stitle").textContent = it.t;
+  const VERB = { approve: "approved", park: "parked", draft: "moved it back to draft", changes: "asked for changes", reject: "rejected" };
+  for (const r of it.rv) {
+    const li = el("li", r.verdict === "comment" ? "" : "ev");
+    const head = el("div", "who");
+    const b = el("b", null, r.who); head.append(b);
+    if (r.verdict !== "comment") head.append(document.createTextNode(" " + (VERB[r.verdict] || r.verdict)));
+    head.append(document.createTextNode(" · " + ago(r.at)));
+    if (r.ver) head.append(document.createTextNode(" · " + r.ver + (r.lang && r.lang !== it.lang ? " (" + r.lang + ")" : "")));
+    if (r.at_s != null && r.render === it.id) {
+      head.append(document.createTextNode(" · "));
+      const at = el("button", "at", "at " + fmt(r.at_s)); at.type = "button";
+      at.onclick = () => { closeSheet(); video.currentTime = Number(r.at_s); play(); };
+      head.append(at);
+    } else if (r.at_s != null) head.append(document.createTextNode(" · at " + fmt(r.at_s)));
+    li.append(head);
+    if (r.text) li.append(el("div", "txt", r.text));
+    ul.append(li);
+  }
+  if (!it.rv.length) ul.append(el("li", "ev", "No comments yet."));
+}
+$("csend").onclick = async () => {
+  const it = item(); if (!it) return;
+  const name = $("who").value.trim(), text = $("ctext").value.trim();
+  if (!name) { $("whof").hidden = false; $("who").focus(); toast("Add your name"); return; }
+  store.set("hub-who", name);
+  if (!text) { $("ctext").focus(); return; }
+  $("csend").disabled = true;
+  try {
+    const j = await api("comment", { vid: it.vid, render: it.id, who: name, text, at_s: $("atnow").checked ? video.currentTime : null });
+    const r = Object.assign({ ver: it.ver, lang: it.lang }, j.review);
+    for (const x of BYID.values()) if (x.vid === it.vid) x.rv = [r].concat(x.rv);
+    $("ctext").value = ""; $("whof").hidden = true;
+    renderComments(); refreshPlayerMeta(); toast("Comment posted");
+  } catch (e) { toast("Couldn't post that. Try again."); }
+  finally { $("csend").disabled = false; }
+};
+
+load();
+</script>
+</body>
+</html>
