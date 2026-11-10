@@ -14,6 +14,8 @@ jobs:
       - run: |
           git config user.name "frames-bot"
           git config user.email "frames-bot@users.noreply.github.com"
-          git add -A frames/out covers 2>/dev/null || true
+          [ -d frames/out ] && git add -A frames/out
+          [ -d covers ] && git add -A covers
+          true
           git commit -m "frames: output" || exit 0
           git push origin HEAD:${GITHUB_REF_NAME}-out
