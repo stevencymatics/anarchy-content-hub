@@ -1,0 +1,19 @@
+name: frames
+on:
+  push:
+    branches: ['frames/**']
+permissions:
+  contents: write
+jobs:
+  frames:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y ffmpeg >/dev/null 2>&1 || true
+      - run: bash frames/run.sh
+      - run: |
+          git config user.name "frames-bot"
+          git config user.email "frames-bot@users.noreply.github.com"
+          git add -A frames/out covers 2>/dev/null || true
+          git commit -m "frames: output" || exit 0
+          git push origin HEAD:${GITHUB_REF_NAME}-out
